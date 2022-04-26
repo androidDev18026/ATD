@@ -73,6 +73,24 @@ class PoliticsCrawler:
 
         raise FileNotFoundError(f"{path} doesn't exist")
 
+    @staticmethod
+    def get_all_links(path : str):
+        urls = []
+
+        try:
+            path = PoliticsCrawler.validate_file(path)
+
+            with open(path, mode='r', encoding='utf-8') as infile:
+                infile.readline()
+                for line in infile.readlines():
+                    urls += line.split(',')[1].splitlines(keepends=False)
+
+            return urls
+
+        except(FileNotFoundError):
+            pass
+        
+                  
 
 def main():
 
@@ -87,7 +105,6 @@ def main():
     cr.read_from_file()
 
     session.run(cr.get_raw_html_and_write)
-
 
 if __name__ == "__main__":
     main()
