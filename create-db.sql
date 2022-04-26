@@ -2,11 +2,12 @@ DROP TABLE IF EXISTS documents CASCADE;
 
 CREATE TABLE documents (
     id SMALLINT PRIMARY KEY,
-    body VARCHAR NOT NULL,
+    body TEXT NOT NULL,
     filepath VARCHAR ( 30 ) NOT NULL,
     length SMALLINT NOT NULL,
     size_kb INT NOT NULL,
-    time_crawled TIMESTAMP WITHOUT TIME ZONE
+    time_crawled TIMESTAMP WITHOUT TIME ZONE,
+    doc_url VARCHAR ( 100 )
 );
 
 /* With Header */
@@ -15,8 +16,8 @@ COPY documents FROM PROGRAM 'awk FNR-1 /home/panos/Documents/ATD/docengine/raw_d
 /* Add Ts Vector column */
 ALTER TABLE documents ADD COLUMN docvec TSVECTOR;
 
-/* Convert column to vector type */
-UPDATE documents SET docvec = to_tsvector(body);
+/* Convert column to vector type (Greek config) */
+UPDATE documents SET docvec = to_tsvector('greek', body);
 
 /* Drop original column */
 ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE;
