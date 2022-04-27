@@ -9,8 +9,8 @@ CREATE TABLE documents (
     id SMALLINT PRIMARY KEY,
     body TEXT NOT NULL,
     filepath VARCHAR ( 100 ) NOT NULL,
-    length SMALLINT NOT NULL,
-    size_kb INT NOT NULL,
+    length SMALLINT NOT NULL DEFAULT 0,
+    size_kb INT NOT NULL DEFAULT 0,
     doc_url VARCHAR ( 250 ),
     time_crawled TIMESTAMP WITHOUT TIME ZONE
 );
