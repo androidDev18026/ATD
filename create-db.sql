@@ -1,3 +1,8 @@
+/* 
+    Using enviroment variable CSV_PATH to determine the location of the csv file
+    Define it in the psql init script like : # psql -d db_name -f create-db.sql -e -v CSV_PATH=/path/to/csv
+*/
+
 DROP TABLE IF EXISTS documents CASCADE;
 
 CREATE TABLE documents (
