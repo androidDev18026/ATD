@@ -7,4 +7,3 @@ Task for the ATD course - DWS MSc Spring 2022
 
 - [X] Create a crawler to get articles and save them in csv files    
 - [ ] Add them to Postgres
-=======
