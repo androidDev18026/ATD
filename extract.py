@@ -1,21 +1,31 @@
 import os
 import glob
+import sys
 import re
+import logging
+import csv
+import pandas as pd
 
 from bs4 import BeautifulSoup
 from crawler import PoliticsCrawler as crawler
 
-VALID_SITES = ("https://www.in.gr", "https://www.zougla.gr", "https://www.naftemporiki.gr")
+VALID_SITES = (
+    "https://www.in.gr",
+    "https://www.zougla.gr",
+    "https://www.naftemporiki.gr",
+    "https://www.news247.gr",
+)
 
 
 class DirectoryNotFound(FileNotFoundError):
     __module__ = FileNotFoundError.__module__
 
 
-class CSSSelector:
+class Selector:
     IN = ".main-content > div:nth-child(2)"
     ZOUGLA = "div.article-container:nth-child(2) > div:nth-child(1) > div:nth-child(8)"
     NAFTEMPORIKI = "#leftPHArea_Div1 > div:nth-child(1)"
+    NEWS247 = ["div", {"class": "article-body__body"}]
 
 
 class Extractor:
@@ -23,6 +33,8 @@ class Extractor:
         self.dirname = Extractor.validate_directory(dirname)
         self.links = links
         self.html_raw = []
+        self.bodies = []
+        self.csv_out: pd.DataFrame = None
 
     def __repr__(self) -> str:
         return f"Reading from {self.dirname}"
@@ -33,11 +45,11 @@ class Extractor:
             key=lambda x: int("".join(filter(str.isdigit, x))),
         )
 
-    def map_to_links(self):
+    def map_to_links(self, simple=True):
 
         urls = crawler.get_all_links(self.links)
-        urls = [re.split(r"\b(?:(/)(?!\1))+\b", s)[0] for s in urls]
-      
+        urls = [re.split(r"\b(?:(/)(?!\1))+\b", s)[0] for s in urls] if simple else urls
+
         return dict(zip(self.html_raw, urls))
 
     def get_selector(self, doc):
@@ -49,11 +61,13 @@ class Extractor:
             site = map_[doc]
 
             if site == VALID_SITES[0]:
-                selector = CSSSelector.IN
+                selector = Selector.IN
             elif site == VALID_SITES[1]:
-                selector = CSSSelector.ZOUGLA
+                selector = Selector.ZOUGLA
             elif site == VALID_SITES[2]:
-                selector = CSSSelector.NAFTEMPORIKI
+                selector = Selector.NAFTEMPORIKI
+            elif site == VALID_SITES[3]:
+                selector = Selector.NEWS247
 
         return selector if selector is not None else None
 
@@ -63,14 +77,40 @@ class Extractor:
             raw = infile.read()
 
         soup = BeautifulSoup(raw, "html.parser")
+        selector = self.get_selector(html_doc)
 
-        article_body = "".join(
-            soup.select(self.get_selector(html_doc), limit=1)[0].find_all(string=True)
+        if isinstance(selector, str):
+            article_body = "".join(
+                soup.select(selector, limit=1)[0].find_all(string=True)
+            )
+        else:
+            article_body_tags = soup.find(*selector).find_all("p", recursive=False)[:-1]
+            article_body = "".join([t.text for t in article_body_tags])
+
+        clean_article_body = re.sub(r"[^\w .~;]+", "", article_body).strip()
+
+        return clean_article_body
+
+    def get_all_bodies(self):
+        self.bodies = [self.extract_main(doc) for doc in self.html_raw if self.html_raw]
+
+    def construct_csv(self):
+        df_tmp = []
+
+        map_ = self.map_to_links(simple=False)
+
+        self.get_all_bodies()
+
+        for i, doc_path in enumerate(self.html_raw):
+            body = self.bodies[i]
+
+            df_tmp += [
+                (body, doc_path, len(body), len(body.encode("utf-8")), map_[doc_path])
+            ]
+
+        self.csv_out = pd.DataFrame(
+            df_tmp, columns=("body", "path", "length", "size_bytes", "url")
         )
-
-        clean_article_body = re.sub(r'[^\w ,.-~;]+', '', article_body)
-
-        print(clean_article_body)
 
     @staticmethod
     def validate_directory(dir):
@@ -80,12 +120,34 @@ class Extractor:
 
 
 def main():
-    e = Extractor("raw_docs", "./utils/links.csv")
 
-    e.find_all_files()
+    logging.basicConfig(
+        format="[%(levelname)s] %(asctime)s %(message)s", datefmt="%d/%m/%Y %I:%M:%S %p"
+    )
+
+    logger = logging.getLogger()
+    logger.setLevel("INFO")
     
-    e.extract_main(e.html_raw[9])
- 
+    logger.info("Starting the extractor...")
+    
+    extractor = Extractor("raw_docs", "./utils/links.csv")
+
+    extractor.find_all_files()
+    extractor.construct_csv()
+
+    # Write csv to outfile
+    try:
+        extractor.csv_out.to_csv(
+            sys.argv[1],
+            sep=",",
+            header=True,
+            encoding="utf-8",
+            index_label="id",
+            quoting=csv.QUOTE_NONE,
+        )
+        logger.info("Done writing to %s", sys.argv[1])
+    except IOError:
+        logger.error("Failed to write to %s", sys.argv[1])
 
 
 if __name__ == "__main__":
