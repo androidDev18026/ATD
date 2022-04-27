@@ -8,6 +8,7 @@ import pandas as pd
 
 from bs4 import BeautifulSoup
 from crawler import PoliticsCrawler as crawler
+from datetime import datetime
 
 VALID_SITES = (
     "https://www.in.gr",
@@ -103,13 +104,21 @@ class Extractor:
 
         for i, doc_path in enumerate(self.html_raw):
             body = self.bodies[i]
+            now = datetime.isoformat(datetime.now(), sep=" ", timespec="seconds")
 
             df_tmp += [
-                (body, doc_path, len(body), len(body.encode("utf-8")), map_[doc_path])
+                (
+                    body,
+                    doc_path,
+                    len(body),
+                    len(body.encode("utf-8")),
+                    map_[doc_path],
+                    now,
+                )
             ]
 
         self.csv_out = pd.DataFrame(
-            df_tmp, columns=("body", "path", "length", "size_bytes", "url")
+            df_tmp, columns=("body", "path", "length", "size_bytes", "url", "wall_time")
         )
 
     @staticmethod
@@ -127,9 +136,9 @@ def main():
 
     logger = logging.getLogger()
     logger.setLevel("INFO")
-    
+
     logger.info("Starting the extractor...")
-    
+
     extractor = Extractor("raw_docs", "./utils/links.csv")
 
     extractor.find_all_files()
