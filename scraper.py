@@ -91,7 +91,7 @@ def main():
 
     links = flatten([get_latest_from_url(url) for url in base_urls])
 
-    random.shuffle(links)
+    # random.shuffle(links)
 
     links_with_index = list(zip(range(len(links)), links))
 
