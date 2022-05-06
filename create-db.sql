@@ -24,4 +24,4 @@ ALTER TABLE documents ADD COLUMN docvec TSVECTOR;
 /* Convert column to vector type (Greek config) */
 UPDATE documents SET docvec = to_tsvector('greek', body);
 
-/* ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE; * /
+/* ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE; */
