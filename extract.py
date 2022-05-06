@@ -1,14 +1,16 @@
-import os
-import glob
-import sys
-import re
-import logging
 import csv
-import pandas as pd
-
-from bs4 import BeautifulSoup
-from crawler import PoliticsCrawler as crawler
+import glob
+import logging
+import os
+import re
+import sys
 from datetime import datetime
+from unicodedata import normalize
+
+import pandas as pd
+from bs4 import BeautifulSoup
+
+from crawler import PoliticsCrawler as crawler
 
 VALID_SITES = (
     "https://www.in.gr",
@@ -81,9 +83,19 @@ class Extractor:
         selector = self.get_selector(html_doc)
 
         if isinstance(selector, str):
-            article_body = "".join(
-                soup.select(selector, limit=1)[0].find_all(string=True)
-            )
+            if soup.select(selector, limit=1):
+                article_body = "".join(
+                    soup.select(selector, limit=1)[0].find_all(string=True)
+                )
+            else:
+                # Naftermporiki loophole
+                article_body = "".join(
+                    map(
+                        lambda x: normalize("NFKD", x.get_text(strip=True)),
+                        soup.select("#spBody", limit=1)[0].find_all("p", string=True),
+                    )
+                )
+                
         else:
             article_body_tags = soup.find(*selector).find_all("p", recursive=False)[:-1]
             article_body = "".join([t.text for t in article_body_tags])
