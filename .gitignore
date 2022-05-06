@@ -23,5 +23,6 @@
 # Other Files #
 ###############
 .vscode
+raw_docs/*
 __pycache__/*
 *.txt
