@@ -55,3 +55,5 @@ if __name__ == "__main__":
     df = read_df(sys.argv[1])
 
     write_article(df, sys.argv[2])
+
+    logger.info("Done")

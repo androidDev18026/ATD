@@ -121,7 +121,6 @@ class Extractor:
             df_tmp += [
                 (
                     body,
-                    doc_path,
                     len(body),
                     len(body.encode("utf-8")),
                     map_[doc_path],
@@ -130,7 +129,7 @@ class Extractor:
             ]
 
         self.csv_out = pd.DataFrame(
-            df_tmp, columns=("body", "path", "length", "size_bytes", "url", "wall_time")
+            df_tmp, columns=("body", "length", "size_bytes", "url", "wall_time")
         )
 
     @staticmethod
