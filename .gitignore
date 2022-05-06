@@ -24,5 +24,6 @@
 ###############
 .vscode
 raw_docs/
+raw_docs/*.html
 __pycache__/*
 *.txt
