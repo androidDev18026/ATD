@@ -9,8 +9,9 @@
 DROP TABLE IF EXISTS documents CASCADE;
 
 CREATE TABLE documents (
-    id SMALLINT PRIMARY KEY,
+    id SMALLINT UNIQUE PRIMARY KEY,
     body TEXT NOT NULL,
+    title VARCHAR ( 200 ) NOT NULL,
     filepath VARCHAR ( 100 ) NULL,
     length SMALLINT NOT NULL DEFAULT 0,
     size_kb INT NOT NULL DEFAULT 0,
@@ -19,7 +20,7 @@ CREATE TABLE documents (
 );
 
 /* With Header */
-COPY documents(id, body, length, size_kb, doc_url, time_crawled) 
+COPY documents(id, title, body, length, size_kb, doc_url, time_crawled) 
 FROM PROGRAM 'awk FNR-1 ':'CSV_PATH'' | cat' DELIMITER ',' CSV;
 
 /* Create a temp table to load the actual paths stored locally */

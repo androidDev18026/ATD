@@ -6,6 +6,7 @@ import re
 import sys
 from datetime import datetime
 from unicodedata import normalize
+from xml.etree.ElementTree import ParseError
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -36,6 +37,7 @@ class Extractor:
         self.dirname = Extractor.validate_directory(dirname)
         self.links = links
         self.html_raw = []
+        self.titles = []
         self.bodies = []
         self.csv_out: pd.DataFrame = None
 
@@ -74,12 +76,21 @@ class Extractor:
 
         return selector if selector is not None else None
 
-    def extract_main(self, html_doc):
-
+    @staticmethod
+    def get_soup(html_doc: str, parser="html.parser") -> BeautifulSoup:
         with open(html_doc, "r", encoding="utf-8") as infile:
             raw = infile.read()
 
-        soup = BeautifulSoup(raw, "html.parser")
+        soup = BeautifulSoup(raw, parser)
+
+        if soup:
+            return soup
+        else:
+            raise ParseError("Cannot parse documents.")
+
+    def extract_main(self, html_doc):
+
+        soup = self.get_soup(html_doc)
         selector = self.get_selector(html_doc)
 
         if isinstance(selector, str):
@@ -95,7 +106,7 @@ class Extractor:
                         soup.select("#spBody", limit=1)[0].find_all("p", string=True),
                     )
                 )
-                
+
         else:
             article_body_tags = soup.find(*selector).find_all("p", recursive=False)[:-1]
             article_body = "".join([t.text for t in article_body_tags])
@@ -104,8 +115,22 @@ class Extractor:
 
         return clean_article_body
 
+    def get_title(self, html_doc, default="Empty"):
+
+        soup = self.get_soup(html_doc)
+
+        title = soup.title.text
+
+        title = re.sub(r"\W", " ", title)
+        title = re.sub(r"\s\s+", " ", title)
+
+        return title.strip() if title else default
+
     def get_all_bodies(self):
         self.bodies = [self.extract_main(doc) for doc in self.html_raw if self.html_raw]
+
+    def get_all_titles(self):
+        self.titles = [self.get_title(doc) for doc in self.html_raw if self.html_raw]
 
     def construct_csv(self):
         df_tmp = []
@@ -113,13 +138,16 @@ class Extractor:
         map_ = self.map_to_links(simple=False)
 
         self.get_all_bodies()
+        self.get_all_titles()
 
         for i, doc_path in enumerate(self.html_raw):
             body = self.bodies[i]
+            title = self.titles[i]
             now = datetime.isoformat(datetime.now(), sep=" ", timespec="seconds")
 
             df_tmp += [
                 (
+                    title,
                     body,
                     len(body),
                     len(body.encode("utf-8")),
@@ -129,7 +157,8 @@ class Extractor:
             ]
 
         self.csv_out = pd.DataFrame(
-            df_tmp, columns=("body", "length", "size_bytes", "url", "wall_time")
+            df_tmp,
+            columns=("title", "body", "length", "size_bytes", "url", "wall_time"),
         )
 
     @staticmethod
