@@ -1,11 +1,11 @@
-import sys
-from typing import List, NamedTuple
-import psycopg
 import logging
 import re
-from psycopg.rows import namedtuple_row
-from psycopg import sql
+import sys
+from typing import List, NamedTuple
 
+import psycopg
+from psycopg import sql
+from psycopg.rows import namedtuple_row
 
 logging.basicConfig(
     format="[%(levelname)s] %(asctime)s: %(message)s",
@@ -16,6 +16,15 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 MAX_RESULTS = 100
+VALID_METRICS = {
+    "no_doc_length": 0,
+    "div_rank_by_1_log": 1,
+    "div_doc_length": 2,
+    "harmonic_dist": 4,
+    "div_unique": 8,
+    "div_rank_by_1_log_unique": 16,
+    "div_rank_1": 32
+}
 
 
 def initialize_conn(dbname, password, host="localhost", user="postgres", port="5432"):
@@ -29,7 +38,7 @@ def initialize_conn(dbname, password, host="localhost", user="postgres", port="5
         logger.error("Failed to connect to %s", dbname)
 
 
-def prep_query(user_input: str):
+def prep_query(user_input: str, metric: int = 0) -> str:
 
     user_input = re.sub("\W", " ", user_input)
     user_input = re.sub("\s\s+", " ", user_input)
@@ -37,11 +46,11 @@ def prep_query(user_input: str):
     logger.info("User searched for [%s]", user_input)
 
     query = (
-        "SELECT title, filepath, ts_rank_cd(docvec, query) AS rank \
+        "SELECT title, filepath, ts_rank_cd(docvec, query, %d) AS rank \
     FROM documents, plainto_tsquery('greek', '%s') query \
     WHERE query @@ docvec \
     ORDER BY rank DESC"
-        % user_input.strip()
+        % (metric, user_input.strip())
     )
 
     logger.info("Constructed the query")
@@ -99,13 +108,28 @@ def display_results(results: List[NamedTuple]) -> None:
         logger.warning("Got an empty list, nothing to display")
 
 
+# display all available metrics
+def validate_metric(metric: str) -> int:
+    if metric in VALID_METRICS.keys():
+        logger.info("Metric chosen [%s]", metric)
+        return VALID_METRICS[metric]
+
+    logger.warning("Invalid metric found, falling back to default (0)")
+    return 0
+
+
 if __name__ == "__main__":
     connection = initialize_conn("test_db", "1234")
 
-    query = prep_query(sys.argv[1])
-    max_res = int(sys.argv[2])
+    assert len(sys.argv) > 2, "Not enough arguments"
 
-    results = execute_similarity_query(query, connection, max_res)
+    query, metric, max_res = sys.argv[1], sys.argv[2], sys.argv[3]
+
+    metric_ = validate_metric(metric)
+
+    query = prep_query(query, metric=metric_)
+
+    results = execute_similarity_query(query, connection, int(max_res))
 
     display_results(results)
 

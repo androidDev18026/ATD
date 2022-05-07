@@ -7,4 +7,5 @@ Task for the ATD course - DWS MSc Spring 2022
 
 - [X] Create a crawler to get articles and save them in csv files    
 - [X] Add them to Postgres
-- [ ] Connect Postgres with Python using a connector (psycopg3)
+- [X] Connect Postgres with Python using a connector (psycopg3)
+- [ ]  
