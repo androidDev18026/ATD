@@ -22,6 +22,7 @@ CREATE TABLE documents (
 COPY documents(id, body, length, size_kb, doc_url, time_crawled) 
 FROM PROGRAM 'awk FNR-1 ':'CSV_PATH'' | cat' DELIMITER ',' CSV;
 
+/* Create a temp table to load the actual paths stored locally */
 CREATE TEMPORARY TABLE temp_dest (id SMALLINT, filepath_ VARCHAR ( 100 ) NULL);
 COPY temp_dest FROM PROGRAM 'awk FNR-1 ':'LOCAL_PATH'' | cat' DELIMITER ',' CSV;
 
@@ -30,6 +31,10 @@ ALTER TABLE documents ADD COLUMN docvec TSVECTOR;
 
 /* Convert column to vector type (Greek config) */
 UPDATE documents SET docvec = to_tsvector('greek', body);
+
+/* Merge the temp table with the original to get the paths */
 UPDATE documents SET filepath = (select filepath_ from temp_dest where documents.id = temp_dest.id);
 
+/* Raw text files should not be present in the database so we can drop that column
+   and only keep the one with texts represente as vectors */ 
 ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE; 

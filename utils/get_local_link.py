@@ -1,7 +1,6 @@
 import csv
 import os
 import sys
-import json
 from typing import List
 
 
@@ -15,9 +14,12 @@ def get_paths(basedir: str) -> List[str]:
 
 
 if __name__ == "__main__":
-    paths = get_paths("raw_articles")
 
-    with open(sys.argv[1], mode='w', encoding='utf-8') as out:
+    assert len(sys.argv) == 3, 'Not enough arguments!'
+
+    paths = get_paths(sys.argv[1])
+
+    with open(sys.argv[2], mode='w', encoding='utf-8') as out:
         writer = csv.writer(out)
         writer.writerow(("id", "path"))
         writer.writerows([(i, path) for i, path in enumerate(paths)])
