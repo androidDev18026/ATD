@@ -8,8 +8,8 @@ def get_paths(basedir: str) -> List[str]:
     assert os.path.isdir(basedir), f"No such directory {basedir}"
     assert any(os.scandir(basedir)), f"No files in {basedir}"
 
-    filenames = map(lambda f: os.path.abspath(f), os.listdir(basedir))
-
+    filenames = map(lambda f: os.path.abspath(os.path.join(basedir, f)), os.listdir(basedir))
+    
     return sorted(filenames, key=lambda x: int("".join(filter(str.isdigit, x))))
 
 
