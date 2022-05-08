@@ -1,3 +1,4 @@
+import os
 import sys
 import requests
 import re
@@ -75,12 +76,50 @@ def flatten(t) -> List:
     return [item for sublist in t for item in sublist]
 
 
+def file_exists(filepath: str):
+    if os.path.isfile(filepath) and os.stat(filepath, follow_symlinks=False).st_size:
+        logger.info("Found non-empty file %s", os.path.abspath(filepath))
+        return True
+
+    logger.warning("File %s not found", filepath)
+    return False
+
+
+def get_num_lines(filepath: str) -> int:
+    with open(filepath) as f:
+        count = sum(1 for _ in f)
+
+    return count - 1
+
+
+def links_to_file(outfile: str, links: List[str], override: bool = False):
+
+    fmode, start_idx = "w", 0
+
+    if file_exists(outfile) and not override:
+        logger.info("Appending to already existing file %s", outfile)
+        fmode = "a"
+        start_idx = get_num_lines(outfile)
+
+    with open(outfile, mode=fmode, encoding="utf-8") as out:
+        writer = csv.writer(out)
+
+        if fmode == "w":
+            logger.info("Writing to new file %s", outfile)
+            writer.writerow(("id", "url"))
+            writer.writerows(list(zip(range(len(links)), links)))
+        else:
+            writer.writerows(list(zip(range(start_idx, start_idx + len(links)), links)))
+
+
 def main():
 
     logging.basicConfig(
         format="[%(levelname)s] %(asctime)s : %(message)s",
         datefmt="%d/%m/%Y %I:%M:%S %p",
     )
+
+    assert len(sys.argv) == 3, "Not enough arguments: <outfile.csv> <0/1>"
 
     base_urls = (
         "https://www.in.gr/politics/",
@@ -93,14 +132,13 @@ def main():
 
     # random.shuffle(links)
 
-    links_with_index = list(zip(range(len(links)), links))
-
-    logger.info("Starting to write links to outfile...")
-
-    with open(sys.argv[1], mode="w", encoding="utf-8") as out:
-        writer = csv.writer(out)
-        writer.writerow(("id", "url"))
-        writer.writerows(links_with_index)
+    if int(sys.argv[2]) == 1:
+        logger.warning(
+            "File already exists but user requested to discard %s", sys.argv[1]
+        )
+        links_to_file(sys.argv[1], links, override=True)
+    else:
+        links_to_file(sys.argv[1], links)
 
     logger.info("Done")
 
