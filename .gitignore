@@ -27,3 +27,4 @@ raw_docs/
 raw_articles/
 __pycache__/*
 *.txt
+*.ini

@@ -1,7 +1,11 @@
 import logging
+import os
 import re
 import sys
-from typing import List, NamedTuple
+from collections import defaultdict
+from configparser import ConfigParser
+from types import NoneType
+from typing import Dict, List, NamedTuple
 
 import psycopg
 from psycopg import sql
@@ -27,15 +31,54 @@ VALID_METRICS = {
 }
 
 
-def initialize_conn(dbname, password, host="localhost", user="postgres", port="5432"):
-    params = f"dbname={dbname} password={password} host={host} user={user} port={port}"
+def read_from_config(conf_file: str) -> Dict[str,str] | NoneType:
+
+    config = ConfigParser(allow_no_value=False)
+    
+    try:
+        config.read(conf_file)   
+        logger.info("Reading from %s", os.path.abspath(conf_file))     
+    except FileNotFoundError as e:
+        logger.error("File doesn't exist %s", os.path.abspath(conf_file))
+
+    db_conn = defaultdict()
+
+    if config.has_section("credentials"):
+        if config.has_option("credentials", "user"):
+            db_conn["user"] = config.get("credentials", "user")
+            logger.info("Using username %s", db_conn["user"])
+        if config.has_option("credentials", "password"):
+            db_conn["password"] = config.get("credentials", "password")
+            logger.info("Using password %s", "*" * 6)
+        if config.has_option("credentials", "host"):
+            db_conn["host"] = config.get("credentials", "host")
+            logger.info("Using host %s", db_conn["host"])
+        if config.has_option("credentials", "port"):
+            db_conn["port"] = config.get("credentials", "port")
+            logger.info("Using port %s", db_conn["port"])
+        if config.has_option("credentials", "dbname"):
+            db_conn["dbname"] = config.get("credentials", "dbname")
+            logger.info("Using database %s", db_conn["dbname"])
+    else:
+        raise RuntimeError("Configuration file missing parameters")
+
+
+    if db_conn.__len__() >= 5:
+        return db_conn
+
+    logger.error("Insufficient number of connection parameters.")
+
+
+
+def initialize_conn(conf_dict : Dict) -> psycopg.Connection:
 
     try:
-        conn = psycopg.connect(params)
-        logger.info("Established connection with database %s", dbname)
+        conn = psycopg.connect(**conf_dict)
+        logger.info("Established connection with database %s", conf_dict["dbname"])
         return conn
     except psycopg.OperationalError as e:
-        logger.error("Failed to connect to %s", dbname)
+        logger.error("Failed to connect to %s", conf_dict["dbname"])
+        raise e
 
 
 def prep_query(user_input: str, metric: int = 0) -> str:
@@ -119,7 +162,10 @@ def validate_metric(metric: str) -> int:
 
 
 if __name__ == "__main__":
-    connection = initialize_conn("test_db", "1234")
+
+    config = read_from_config("postgre.ini")
+
+    connection = initialize_conn(config)
 
     assert len(sys.argv) > 2, "Not enough arguments"
 
