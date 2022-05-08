@@ -87,9 +87,10 @@ def file_exists(filepath: str):
 
 def get_num_lines(filepath: str) -> int:
     with open(filepath) as f:
-        count = sum(1 for _ in f)
+        count = sum(1 for _ in f) - 1  # header
 
-    return count - 1
+    logger.info("Setting the starting index to %d", count)
+    return count
 
 
 def links_to_file(outfile: str, links: List[str], override: bool = False):

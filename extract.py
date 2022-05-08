@@ -45,6 +45,7 @@ class Extractor:
         return f"Reading from {self.dirname}"
 
     def find_all_files(self):
+
         self.html_raw = sorted(
             glob.glob(f"{self.dirname}/*.html", recursive=False),
             key=lambda x: int("".join(filter(str.isdigit, x))),
@@ -179,7 +180,11 @@ def main():
 
     logger.info("Starting the extractor...")
 
-    extractor = Extractor("raw_docs", "./utils/links.csv")
+    assert (
+        len(sys.argv) == 4
+    ), "Not enough arguments: <html dir> <links.csv> <outfile.csv>"
+
+    extractor = Extractor(sys.argv[1], sys.argv[2])
 
     extractor.find_all_files()
     extractor.construct_csv()
@@ -187,16 +192,16 @@ def main():
     # Write csv to outfile
     try:
         extractor.csv_out.to_csv(
-            sys.argv[1],
+            sys.argv[3],
             sep=",",
             header=True,
             encoding="utf-8",
             index_label="id",
             quoting=csv.QUOTE_NONE,
         )
-        logger.info("Done writing to %s", sys.argv[1])
+        logger.info("Done writing to %s", sys.argv[3])
     except IOError:
-        logger.error("Failed to write to %s", sys.argv[1])
+        logger.error("Failed to write to %s", sys.argv[3])
 
 
 if __name__ == "__main__":
