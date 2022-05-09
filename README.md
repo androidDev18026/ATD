@@ -11,3 +11,4 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] Read credentials from config file
 - [X] Add create directory if not exists in `extract_body.py`
 - [X] Fix `article_path.csv`
+- [ ] Add columns to show in `text_query.py`

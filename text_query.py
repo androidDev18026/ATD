@@ -27,17 +27,17 @@ VALID_METRICS = {
     "harmonic_dist": 4,
     "div_unique": 8,
     "div_rank_by_1_log_unique": 16,
-    "div_rank_1": 32
+    "div_rank_1": 32,
 }
 
 
-def read_from_config(conf_file: str) -> Dict[str,str] | NoneType:
+def read_from_config(conf_file: str) -> Dict[str, str] | NoneType:
 
     config = ConfigParser(allow_no_value=False)
-    
+
     try:
-        config.read(conf_file)   
-        logger.info("Reading from %s", os.path.abspath(conf_file))     
+        config.read(conf_file)
+        logger.info("Reading from %s", os.path.abspath(conf_file))
     except FileNotFoundError as e:
         logger.error("File doesn't exist %s", os.path.abspath(conf_file))
 
@@ -62,15 +62,13 @@ def read_from_config(conf_file: str) -> Dict[str,str] | NoneType:
     else:
         raise RuntimeError("Configuration file missing parameters")
 
-
     if db_conn.__len__() >= 5:
         return db_conn
 
     logger.error("Insufficient number of connection parameters.")
 
 
-
-def initialize_conn(conf_dict : Dict) -> psycopg.Connection:
+def initialize_conn(conf_dict: Dict) -> psycopg.Connection:
 
     try:
         conn = psycopg.connect(**conf_dict)
@@ -167,7 +165,7 @@ if __name__ == "__main__":
 
     connection = initialize_conn(config)
 
-    assert len(sys.argv) > 2, "Not enough arguments"
+    assert len(sys.argv) > 2, "Not enough arguments: <query> <metric> <max_res>"
 
     query, metric, max_res = sys.argv[1], sys.argv[2], sys.argv[3]
 
