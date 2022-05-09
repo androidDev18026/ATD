@@ -26,6 +26,7 @@ def check_dir_exists(dirname: str) -> bool:
 
 
 def get_num_files(dirname: str) -> int:
+    nfiles = 0
     if check_dir_exists(dirname):
         nfiles = len([*os.scandir(os.path.abspath(dirname))])
     else:
@@ -56,15 +57,22 @@ def check_sync(dirname: str, outfile: str):
 def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFrame, int] | NoneType:
 
     ndir = check_sync(dirpath, path)
+    dir_path_present = os.path.exists(dirpath)
 
     if override:
         logger.warning("Directory not empty but user requested to overwrite it")
     else:
         if ndir:
             logger.info("Found mismatch, going to start reading file from line %d", ndir)
+        elif not dir_path_present:
+            with open(os.path.abspath(path)) as infile:
+                ndir = sum(1 for _ in infile) - 1
         else:
-            logger.info("Same number of lines and files detected, not updating...")
-            return NoneType
+            if not get_num_files(dirpath):
+                pass
+            else:
+                logger.info("Same number of lines and files detected, not updating...")
+                return NoneType
         
 
     try:
@@ -74,7 +82,7 @@ def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFra
             encoding="utf-8",
             header=0,
             names=("id", "title", "body"),
-            skiprows=ndir if not override and ndir else 0,
+            skiprows=ndir if not override and ndir and dir_path_present else 0,
             skip_blank_lines=True,
             usecols=("id", "title", "body"),
             index_col=0,
@@ -92,8 +100,10 @@ def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFra
 
 def write_article(df: pd.DataFrame, outdir: str) -> None:
     if not os.path.isdir(outdir):
-        logger.error("%s not a directory", outdir)
-        raise DirectoryNotFound(outdir)
+        logger.warning("%s not a directory", outdir)
+        logger.info("Creating directory %s...", outdir)
+        os.mkdir(os.path.join(os.path.curdir, outdir))
+        logger.info("Created new directory %s", outdir)
 
     logger.info("Writing to %s...", os.path.abspath(outdir))
 
