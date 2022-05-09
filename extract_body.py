@@ -54,7 +54,9 @@ def check_sync(dirname: str, outfile: str):
     return ndir if diff else 0
 
 
-def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFrame, int] | NoneType:
+def read_df(
+    path: str, dirpath: str, override: bool = False
+) -> Tuple[pd.DataFrame, int] | NoneType:
 
     ndir = check_sync(dirpath, path)
     dir_path_present = os.path.exists(dirpath)
@@ -63,7 +65,9 @@ def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFra
         logger.warning("Directory not empty but user requested to overwrite it")
     else:
         if ndir:
-            logger.info("Found mismatch, going to start reading file from line %d", ndir)
+            logger.info(
+                "Found mismatch, going to start reading file from line %d", ndir
+            )
         elif not dir_path_present:
             with open(os.path.abspath(path)) as infile:
                 ndir = sum(1 for _ in infile) - 1
@@ -73,7 +77,6 @@ def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFra
             else:
                 logger.info("Same number of lines and files detected, not updating...")
                 return NoneType
-        
 
     try:
         df = pd.read_csv(
@@ -121,7 +124,9 @@ if __name__ == "__main__":
 
     logger.info("Starting %s", Path(__file__).stem)
 
-    assert len(sys.argv) == 4, "Not enough arguments: <outfile.csv> <outdir> <0(no override)/1(override)>"
+    assert (
+        len(sys.argv) == 4
+    ), "Not enough arguments: <outfile.csv> <outdir> <0(no override)/1(override)>"
 
     overwrite = bool(int(sys.argv[3]))
 
