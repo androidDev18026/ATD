@@ -9,5 +9,5 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] Add them to Postgres
 - [X] Connect Postgres with Python using a connector (psycopg3)
 - [X] Read credentials from config file
-- [ ] Add create directory if not exists in '''extract_body.py'''
-- [ ] Fix '''article_path.csv'''
+- [X] Add create directory if not exists in `extract_body.py`
+- [X] Fix `article_path.csv`
