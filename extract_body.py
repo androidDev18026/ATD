@@ -38,26 +38,34 @@ def check_sync(dirname: str, outfile: str):
     if os.path.exists(outfile) and os.path.isfile(outfile):
         logger.info("%s present in the current path", outfile)
         with open(os.path.abspath(outfile)) as infile:
-            clines = sum(1 for _ in infile)
+            clines = sum(1 for _ in infile) - 1
     else:
         logger.warning("%s not present in the current path", outfile)
 
     if clines:
         logger.info("Found %d lines in csv file", clines)
         ndir = get_num_files(dirname)
-        logger.warning("Difference of %d lines", abs(ndir - clines))
+        diff = abs(ndir - clines)
+        logger.warning("Difference of %d lines", diff)
     else:
         raise RuntimeWarning("File is empty, this shouldn't be the case")
 
-    return ndir
+    return ndir if diff else 0
 
 
-def read_df(path: str, dirpath: str) -> Tuple[pd.DataFrame, int] | NoneType:
+def read_df(path: str, dirpath: str, override: bool = False) -> Tuple[pd.DataFrame, int] | NoneType:
 
     ndir = check_sync(dirpath, path)
 
-    if ndir:
-        logger.info("Found mismatch, going to start reading file from line %d", ndir)
+    if override:
+        logger.warning("Directory not empty but user requested to overwrite it")
+    else:
+        if ndir:
+            logger.info("Found mismatch, going to start reading file from line %d", ndir)
+        else:
+            logger.info("Same number of lines and files detected, not updating...")
+            return NoneType
+        
 
     try:
         df = pd.read_csv(
@@ -66,7 +74,7 @@ def read_df(path: str, dirpath: str) -> Tuple[pd.DataFrame, int] | NoneType:
             encoding="utf-8",
             header=0,
             names=("id", "title", "body"),
-            skiprows=ndir,
+            skiprows=ndir if not override and ndir else 0,
             skip_blank_lines=True,
             usecols=("id", "title", "body"),
             index_col=0,
@@ -103,10 +111,16 @@ if __name__ == "__main__":
 
     logger.info("Starting %s", Path(__file__).stem)
 
-    assert len(sys.argv) == 3, "Not enough arguments: <outfile.csv> <outdir>"
+    assert len(sys.argv) == 4, "Not enough arguments: <outfile.csv> <outdir> <0(no override)/1(override)>"
 
-    df, nlines = read_df(sys.argv[1], sys.argv[2])
+    overwrite = bool(int(sys.argv[3]))
 
-    write_article(df, sys.argv[2])
+    ret = read_df(sys.argv[1], sys.argv[2], override=overwrite)
+
+    if ret is not NoneType:
+        df, nlines = ret
+        write_article(df, sys.argv[2])
+    else:
+        pass
 
     logger.info("Done")
