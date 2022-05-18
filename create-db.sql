@@ -4,6 +4,8 @@
 
     2. To add the links to the actual articles append perform another copy from the second enviroment vaiable
        LOCAL_PATH
+
+    Example: $ psql -U postgres -f create-db.sql -d test_db -a -v CSV_PATH=$PWD/outfile.csv -v LOCAL_PATH=$PWD/article_path.csv
 */
 
 DROP TABLE IF EXISTS documents CASCADE;
