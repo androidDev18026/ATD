@@ -168,7 +168,7 @@ def display_results(results: List[NamedTuple]) -> None:
 
 
 def find_relevant(results: List[NamedTuple], threshold: float = 0.5) -> int:
-    return sum(1 for i in results if i.rank > threshold)
+    return sum(1 for i in results if i.rank >= threshold)
     
     
 # display all available metrics
