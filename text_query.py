@@ -81,19 +81,18 @@ def initialize_conn(conf_dict: Dict) -> psycopg.Connection:
         raise e
 
 
-def prep_query(user_input: str, metric: int = 0) -> str:
+def prep_query(user_input: str, *columns: str, metric: int = 0) -> str:
 
     user_input = re.sub("\W", " ", user_input)
     user_input = re.sub("\s\s+", " ", user_input)
-
+    
     logger.info("User searched for [%s]", user_input)
-
+    
     query = (
-        "SELECT title, filepath, ts_rank_cd(docvec, query, %d) AS rank \
-    FROM documents, plainto_tsquery('greek', '%s') query \
+        f"SELECT {','.join(columns)}, ts_rank_cd(docvec, query, {metric}) AS rank \
+    FROM documents, plainto_tsquery('greek', '{user_input.strip()}') query \
     WHERE query @@ docvec \
     ORDER BY rank DESC"
-        % (metric, user_input.strip())
     )
 
     logger.info("Constructed the query")
@@ -126,7 +125,7 @@ def execute_similarity_query(
 
     if result_set:
         logger.info(
-            "Found %d relevant docs out of the %d requested", len(result_set), max_res
+            "Found %d docs out of the %d requested", len(result_set), max_res
         )
     else:
         logger.warning("Got no results!")
@@ -168,6 +167,10 @@ def display_results(results: List[NamedTuple]) -> None:
         logger.warning("Got an empty list, nothing to display")
 
 
+def find_relevant(results: List[NamedTuple], threshold: float = 0.5) -> int:
+    return sum(1 for i in results if i.rank > threshold)
+    
+    
 # display all available metrics
 def validate_metric(metric: str, default: str = "no_doc_length") -> int:
     if metric in VALID_METRICS.keys():
@@ -181,7 +184,7 @@ def validate_metric(metric: str, default: str = "no_doc_length") -> int:
 
 
 if __name__ == "__main__":
-
+    
     config = read_from_config("postgre.ini")
 
     connection = initialize_conn(config)
@@ -192,11 +195,20 @@ if __name__ == "__main__":
 
     metric_ = validate_metric(metric)
 
-    query = prep_query(query, metric=metric_)
-
+    cols_to_display = ("title", "filepath")
+    logger.info(f"Showing cols {*cols_to_display,}")
+    
+    
+    query = prep_query(query, *cols_to_display, metric=metric_)
+    
     results = execute_similarity_query(query, connection, int(max_res))
     scaled_results = normalize_rank(results)
-
+    
+    thres: float = 0.5
+    
+    logger.info("Using threshold to classify document as recommended: >= %.1f", thres)    
+    logger.info("Recommended Docs: %d/%d", find_relevant(scaled_results, threshold=thres), results.__len__())
+    
     display_results(scaled_results)
 
     connection.close()

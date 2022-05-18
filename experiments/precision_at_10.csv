@@ -1,4 +1,4 @@
-id,query,n_relevant,n_predicted,intersection,precision_at_k
+id,query,n_relevant,n_predicted,intersection,precision_at_10
 1,κυβερνηση,2,4,0,0.0000
 2,λογαριασμοι δεη,5,6,3,0.5000
 3,νοικοκυρια,3,5,3,0.6000
