@@ -11,6 +11,8 @@ import psycopg
 from psycopg import sql
 from psycopg.rows import namedtuple_row
 
+import numpy as np
+
 logging.basicConfig(
     format="[%(levelname)s] %(asctime)s: %(message)s",
     datefmt="%d/%m/%Y %H:%M:%S",
@@ -132,9 +134,24 @@ def execute_similarity_query(
     return result_set
 
 
+def normalize_rank(results: List[NamedTuple]) -> List[NamedTuple]:
+
+    def normalize(data: List[float]) -> List[float]:
+        return (data - np.min(data)) / (np.max(data) - np.min(data))        
+    
+    norm_ranks = normalize([row.rank for row in results])
+    scaled_results = list()
+    
+    for i, row in enumerate(results):
+        copy_Row = row._replace(rank=norm_ranks[i])
+        scaled_results += [copy_Row]
+            
+    return scaled_results
+
+
 def display_results(results: List[NamedTuple]) -> None:
     from tabulate import tabulate
-
+    
     if results:
         print(
             tabulate(
@@ -176,8 +193,9 @@ if __name__ == "__main__":
     query = prep_query(query, metric=metric_)
 
     results = execute_similarity_query(query, connection, int(max_res))
+    scaled_results = normalize_rank(results)
 
-    display_results(results)
+    display_results(scaled_results)
 
     connection.close()
     logger.info("Connection to database closed")
