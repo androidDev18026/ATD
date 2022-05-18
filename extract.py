@@ -26,7 +26,7 @@ class DirectoryNotFound(FileNotFoundError):
 
 
 class Selector:
-    IN = ".main-content > div:nth-child(2)"
+    IN = [".main-content > div:nth-child(2)", ".floated-content > div:nth-child(1)"]
     ZOUGLA = "div.article-container:nth-child(2) > div:nth-child(1) > div:nth-child(8)"
     NAFTEMPORIKI = "#leftPHArea_Div1 > div:nth-child(1)"
     NEWS247 = ["div", {"class": "article-body__body"}]
@@ -93,8 +93,19 @@ class Extractor:
 
         soup = self.get_soup(html_doc)
         selector = self.get_selector(html_doc)
-
-        if isinstance(selector, str):
+        
+        if isinstance(selector, list) and not(any(filter(lambda x : x.__len__() < 3, selector))):
+            if soup.select(selector[0], limit=1):
+                article_body = "".join(
+                    soup.select(selector[0], limit=1)[0].find_all(string=True)
+                )
+            else:
+                article_body = "".join(
+                    soup.select(selector[1], limit=1)[0].find_all(string=True)
+                )
+            
+            
+        elif isinstance(selector, str):
             if soup.select(selector, limit=1):
                 article_body = "".join(
                     soup.select(selector, limit=1)[0].find_all(string=True)
