@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import unicodedata
 from textwrap import fill
 from pathlib import Path
 from types import NoneType
@@ -102,6 +103,11 @@ def read_df(
         logger.error(o.strerror)
 
 
+def strip_accents_and_lowercase(s: str) -> str:
+   return ''.join(c for c in unicodedata.normalize('NFD', s)
+                  if unicodedata.category(c) != 'Mn').lower()
+
+
 def write_article(df: pd.DataFrame, outdir: str) -> None:
     if not os.path.isdir(outdir):
         logger.warning("%s not a directory", outdir)
@@ -114,7 +120,7 @@ def write_article(df: pd.DataFrame, outdir: str) -> None:
     for i, txt in df.iterrows():
         fname = f"article{i}.txt"
         with open(os.path.join(outdir, fname), mode="w", encoding="utf-8") as out:
-            res = out.write(fill("".join(txt.values), width=80, break_long_words=False))
+            res = out.write(fill(strip_accents_and_lowercase("".join(txt.values)), width=80, break_long_words=False))
             if res:
                 logger.info("Wrote %s succesfully", fname)
             else:

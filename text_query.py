@@ -10,6 +10,10 @@ from typing import Dict, List, NamedTuple
 import psycopg
 from psycopg import sql
 from psycopg.rows import namedtuple_row
+from greek_stemmer.stemmer import stem_word
+from nltk.corpus import stopwords
+
+from utils.call_grep import execute_cmd
 
 import numpy as np
 
@@ -31,6 +35,18 @@ VALID_METRICS = {
     "div_rank_by_1_log_unique": 16,
     "div_rank_1": 32,
 }
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def read_from_config(conf_file: str) -> Dict[str, str] | NoneType:
@@ -167,6 +183,25 @@ def display_results(results: List[NamedTuple]) -> None:
         logger.warning("Got an empty list, nothing to display")
 
 
+def display_matching_line(query: str, filename: str):
+    query = [word for word in query.split() if word not in stopwords.words("greek")]
+    keywords = [stem_word(word, "NNM").lower() for word in query]        
+    
+    matching_lines = execute_cmd(filename, *keywords)    
+    
+    logger.info("Found %d matching lines in %s", matching_lines.__len__(), filename)
+        
+    for row in matching_lines:
+        line = []
+        for word in row.value.replace('.', ' ').split():
+            if stem_word(word, 'NNM').lower() in keywords:
+                line += [f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"]
+            else:
+                line += [word]
+
+        print(f"Found match in line {row.lineno} -> {' '.join(l for l in line)}")
+        
+        
 def find_relevant(results: List[NamedTuple], threshold: float = 0.5) -> int:
     return sum(1 for i in results if i.rank >= threshold)
     
@@ -193,11 +228,12 @@ if __name__ == "__main__":
 
     query, metric, max_res = sys.argv[1], sys.argv[2], sys.argv[3]
 
+    query_str = query
+    
     metric_ = validate_metric(metric)
 
     cols_to_display = ("title", "filepath")
     logger.info(f"Showing cols {*cols_to_display,}")
-    
     
     query = prep_query(query, *cols_to_display, metric=metric_)
     
@@ -210,6 +246,7 @@ if __name__ == "__main__":
     logger.info("Recommended Docs: %d/%d", find_relevant(scaled_results, threshold=thres), results.__len__())
     
     display_results(scaled_results)
-
+    display_matching_line(query_str, '/home/panos/Documents/ATD/docengine/raw_articles/article124.txt')
+    
     connection.close()
     logger.info("Connection to database closed")
