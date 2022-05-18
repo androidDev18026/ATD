@@ -48,19 +48,19 @@ def read_from_config(conf_file: str) -> Dict[str, str] | NoneType:
     if config.has_section("credentials"):
         if config.has_option("credentials", "user"):
             db_conn["user"] = config.get("credentials", "user")
-            logger.info("Using username %s", db_conn["user"])
+            logger.info("Using username [%s]", db_conn["user"])
         if config.has_option("credentials", "password"):
             db_conn["password"] = config.get("credentials", "password")
-            logger.info("Using password %s", "*" * 6)
+            logger.info("Using password [%s]", "*" * 6)
         if config.has_option("credentials", "host"):
             db_conn["host"] = config.get("credentials", "host")
-            logger.info("Using host %s", db_conn["host"])
+            logger.info("Using host [%s]", db_conn["host"])
         if config.has_option("credentials", "port"):
             db_conn["port"] = config.get("credentials", "port")
-            logger.info("Using port %s", db_conn["port"])
+            logger.info("Using port [%s]", db_conn["port"])
         if config.has_option("credentials", "dbname"):
             db_conn["dbname"] = config.get("credentials", "dbname")
-            logger.info("Using database %s", db_conn["dbname"])
+            logger.info("Using database [%s]", db_conn["dbname"])
     else:
         raise RuntimeError("Configuration file missing parameters")
 
@@ -135,11 +135,13 @@ def execute_similarity_query(
 
 
 def normalize_rank(results: List[NamedTuple]) -> List[NamedTuple]:
-
+    """Normalize ranks in range [0,1]"""
+    
     def normalize(data: List[float]) -> List[float]:
         return (data - np.min(data)) / (np.max(data) - np.min(data))        
     
     norm_ranks = normalize([row.rank for row in results])
+    logger.info("Scaled ranks in range (0,1)")
     scaled_results = list()
     
     for i, row in enumerate(results):

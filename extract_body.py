@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from textwrap import fill
 from pathlib import Path
 from types import NoneType
 from typing import Tuple
@@ -113,7 +114,7 @@ def write_article(df: pd.DataFrame, outdir: str) -> None:
     for i, txt in df.iterrows():
         fname = f"article{i}.txt"
         with open(os.path.join(outdir, fname), mode="w", encoding="utf-8") as out:
-            res = out.write("".join(txt.values))
+            res = out.write(fill("".join(txt.values), width=80, break_long_words=False))
             if res:
                 logger.info("Wrote %s succesfully", fname)
             else:
