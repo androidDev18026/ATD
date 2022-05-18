@@ -150,12 +150,14 @@ def display_results(results: List[NamedTuple]) -> None:
 
 
 # display all available metrics
-def validate_metric(metric: str) -> int:
+def validate_metric(metric: str, default: str = "no_doc_length") -> int:
     if metric in VALID_METRICS.keys():
         logger.info("Metric chosen [%s]", metric)
         return VALID_METRICS[metric]
-
-    logger.warning("Invalid metric found, falling back to default (0)")
+        
+    logger.info("Available metrics: %s", ", ".join(f"'{str(i)}'" for i in VALID_METRICS.keys()))
+    logger.warning("Invalid metric found, falling back to default '%s'", default)
+    
     return 0
 
 
