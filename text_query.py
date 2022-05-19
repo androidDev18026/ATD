@@ -12,7 +12,7 @@ from psycopg import sql
 from psycopg.rows import namedtuple_row
 from greek_stemmer.stemmer import stem_word
 from nltk.corpus import stopwords
-
+from pathlib import PurePath
 from utils.call_grep import execute_cmd
 
 import numpy as np
@@ -183,24 +183,60 @@ def display_results(results: List[NamedTuple]) -> None:
         logger.warning("Got an empty list, nothing to display")
 
 
-def display_matching_line(query: str, filename: str):
-    query = [word for word in query.split() if word not in stopwords.words("greek")]
+def display_matching_line(query: str, filename: str, lang: str = "greek") -> NoneType:
+
+    query = [word for word in query.split() if word not in stopwords.words(lang)]
     keywords = [stem_word(word, "NNM").lower() for word in query]        
     
     matching_lines = execute_cmd(filename, *keywords)    
     
-    logger.info("Found %d matching lines in %s", matching_lines.__len__(), filename)
+    if matching_lines:
+        logger.info("Found %d matching lines in %s", matching_lines.__len__(), filename)
         
-    for row in matching_lines:
-        line = []
-        for word in row.value.replace('.', ' ').split():
-            if stem_word(word, 'NNM').lower() in keywords:
-                line += [f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"]
-            else:
-                line += [word]
+        for row in matching_lines:
+            line = []
+            for word in row.value.replace('.', ' ').split():
+                if stem_word(word, 'NNM').lower() in keywords:
+                    line += [f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"]
+                else:
+                    line += [word]
 
-        print(f"Found match in line {row.lineno} -> {' '.join(l for l in line)}")
+            print(f"Found match in line {row.lineno:3} -> {' '.join(l for l in line)}", end='\n')
+    else:
+        logger.warning("Got an empty response from grep")
         
+
+
+
+def display_matching_lines(results: List[NamedTuple], query: str, thres: float = 0.5) -> NoneType:
+    assert results, 'Got 0 responses from DB, cannot find any matches'
+    
+    filepaths = [row.filepath for row in results if row.rank >= thres]
+    valid_ranks = [row.rank for row in results if row.rank >= thres]
+    
+    def user_input(prompt: str = "\nShow More? (Y/N) : ") -> bool:
+        res = input(prompt).strip().lower()
+        if res in ("y", "yes"):
+            return True 
+        elif res in ("n", "no"):
+            return False
+        return user_input(prompt)
+    
+    prompt1 = "\nShow matching lines in the documents retrieved with specified keywords? (Y/N) : "
+    get_input = user_input(prompt=prompt1)
+
+    if get_input:
+        logger.info("User has requested to show matching lines for keyword(s) [%s]", query)
+        
+        for path, rank in zip(filepaths, valid_ranks):
+            logger.info("Showing matches inside file %s with rank %.5f", PurePath(path).name, rank)
+            display_matching_line(query, path)
+            if not user_input():
+                logging.warning("User requested to halt execution")
+                break        
+    else:
+        logger.info("Skipping the display of matching lines")
+    
         
 def find_relevant(results: List[NamedTuple], threshold: float = 0.5) -> int:
     return sum(1 for i in results if i.rank >= threshold)
@@ -246,7 +282,7 @@ if __name__ == "__main__":
     logger.info("Recommended Docs: %d/%d", find_relevant(scaled_results, threshold=thres), results.__len__())
     
     display_results(scaled_results)
-    display_matching_line(query_str, '/home/panos/Documents/ATD/docengine/raw_articles/article124.txt')
+    display_matching_lines(scaled_results, query_str, thres) 
     
     connection.close()
     logger.info("Connection to database closed")
