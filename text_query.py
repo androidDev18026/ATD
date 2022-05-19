@@ -198,7 +198,7 @@ def display_matching_line(
     if matching_lines:
         logger.info("Found %d matching lines in %s", matching_lines.__len__(), filename)
         keywords = [k.replace("*", "") for k in keywords]
-        logger.info(keywords)
+
         for row in matching_lines:
             line = []
             for word in row.value.replace(".", " ").split():

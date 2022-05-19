@@ -13,4 +13,4 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] Fix `article_path.csv`
 - [X] Add threshold to relevant docs in `text_query.py`
 - [X] Add columns to show in `text_query.py`
-- [ ] Show lines that have keywords (grep maybe?)
+- [X] Show lines that have keywords (grep maybe?)
