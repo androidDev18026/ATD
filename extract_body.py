@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import sys
 import unicodedata
 from pathlib import Path
@@ -109,7 +110,7 @@ def strip_accents_and_lowercase(s: str) -> str:
     ).lower()
 
 
-def write_article(df: pd.DataFrame, outdir: str) -> None:
+def write_article(df: pd.DataFrame, outdir: str, discard_longer: int = 20) -> None:
     if not os.path.isdir(outdir):
         logger.warning("%s not a directory", outdir)
         logger.info("Creating directory %s...", outdir)
@@ -123,7 +124,7 @@ def write_article(df: pd.DataFrame, outdir: str) -> None:
         with open(os.path.join(outdir, fname), mode="w", encoding="utf-8") as out:
             res = out.write(
                 fill(
-                    strip_accents_and_lowercase("".join(txt.values)),
+                    strip_accents_and_lowercase(re.sub(r"\b\w{%d,}\b" % discard_longer, "", "".join(txt.values))),
                     width=80,
                     break_long_words=False,
                 )

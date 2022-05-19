@@ -179,21 +179,31 @@ def display_results(results: List[NamedTuple]) -> None:
         logger.warning("Got an empty list, nothing to display")
 
 
-def display_matching_line(query: str, filename: str, lang: str = "greek") -> NoneType:
+def display_matching_line(query: str, filename: str, lang: str = "greek", cutoff: int = 5) -> NoneType:
 
     query = [word for word in query.split() if word not in stopwords.words(lang)]
-    keywords = [stem_word(word, "NNM").lower() for word in query]
-
+    keywords = list()
+        
+    for word in query:
+        if len(word) >= cutoff:
+            keywords += [stem_word(word, "NNM").lower() + "*"]
+        else:
+            keywords += [word]
+            
     matching_lines = execute_cmd(filename, *keywords)
-
+    color_word = lambda word : f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"
+    
     if matching_lines:
         logger.info("Found %d matching lines in %s", matching_lines.__len__(), filename)
-
+        keywords = [k.replace("*", "") for k in keywords]
+        logger.info(keywords)
         for row in matching_lines:
             line = []
             for word in row.value.replace(".", " ").split():
-                if stem_word(word, "NNM").lower() in keywords:
-                    line += [f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"]
+                if stem_word(word, "NNM").lower() in keywords or word in keywords:
+                    line += [color_word(word)]
+                elif any(stem_word(word, 'NNM').lower().__len__() >= len(w) for w in keywords if len(w) >= cutoff) and any(word.find(k) != -1 for k in keywords):
+                    line += [color_word(word)]
                 else:
                     line += [word]
 
@@ -239,6 +249,7 @@ def display_matching_lines(
             if not user_input():
                 logging.warning("User requested to halt execution")
                 break
+        logger.info("Nothing more to show...")
     else:
         logger.info("Skipping the display of matching lines")
 
