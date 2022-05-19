@@ -1,12 +1,12 @@
+import logging
 import os
 import sys
-import logging
-import pandas as pd
-
-from requests import Response
-from tqdm import tqdm
-from requests_threads import AsyncSession
 from typing import List
+
+import pandas as pd
+from requests import Response
+from requests_threads import AsyncSession
+from tqdm import tqdm
 
 session = AsyncSession(n=200)
 

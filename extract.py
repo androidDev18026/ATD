@@ -93,8 +93,10 @@ class Extractor:
 
         soup = self.get_soup(html_doc)
         selector = self.get_selector(html_doc)
-        
-        if isinstance(selector, list) and not(any(filter(lambda x : x.__len__() < 3, selector))):
+
+        if isinstance(selector, list) and not (
+            any(filter(lambda x: x.__len__() < 3, selector))
+        ):
             if soup.select(selector[0], limit=1):
                 article_body = "".join(
                     soup.select(selector[0], limit=1)[0].find_all(string=True)
@@ -103,8 +105,7 @@ class Extractor:
                 article_body = "".join(
                     soup.select(selector[1], limit=1)[0].find_all(string=True)
                 )
-            
-            
+
         elif isinstance(selector, str):
             if soup.select(selector, limit=1):
                 article_body = "".join(

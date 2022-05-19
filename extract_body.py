@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 import unicodedata
-from textwrap import fill
 from pathlib import Path
+from textwrap import fill
 from types import NoneType
 from typing import Tuple
 
@@ -104,8 +104,9 @@ def read_df(
 
 
 def strip_accents_and_lowercase(s: str) -> str:
-   return ''.join(c for c in unicodedata.normalize('NFD', s)
-                  if unicodedata.category(c) != 'Mn').lower()
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
+    ).lower()
 
 
 def write_article(df: pd.DataFrame, outdir: str) -> None:
@@ -120,7 +121,13 @@ def write_article(df: pd.DataFrame, outdir: str) -> None:
     for i, txt in df.iterrows():
         fname = f"article{i}.txt"
         with open(os.path.join(outdir, fname), mode="w", encoding="utf-8") as out:
-            res = out.write(fill(strip_accents_and_lowercase("".join(txt.values)), width=80, break_long_words=False))
+            res = out.write(
+                fill(
+                    strip_accents_and_lowercase("".join(txt.values)),
+                    width=80,
+                    break_long_words=False,
+                )
+            )
             if res:
                 logger.info("Wrote %s succesfully", fname)
             else:

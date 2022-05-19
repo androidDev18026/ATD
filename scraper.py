@@ -1,15 +1,15 @@
-import os
-import sys
-import requests
-import re
-import random
 import csv
 import logging
-
-from bs4 import BeautifulSoup
+import os
+import random
+import re
+import sys
 from typing import List
-from extract import VALID_SITES
 
+import requests
+from bs4 import BeautifulSoup
+
+from extract import VALID_SITES
 
 ses = requests.session()
 
