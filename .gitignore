@@ -28,3 +28,4 @@ raw_articles/
 __pycache__/*
 *.txt
 *.ini
+!requirements.txt
