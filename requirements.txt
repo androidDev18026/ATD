@@ -1,0 +1,9 @@
+pandas==1.4.2
+requests==2.25.1
+requests-threads==0.1.1
+tqdm==4.64.0
+beautifulsoup4==4.11.1
+numpy==1.22.3
+psycopg==3.0.12
+greek-stemmer-pos==1.1.2
+nltk==3.7
