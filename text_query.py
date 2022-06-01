@@ -145,12 +145,12 @@ def normalize_rank(results: List[NamedTuple]) -> List[NamedTuple]:
     """Normalize ranks in range [0,1]"""
 
     def normalize(data: List[float]) -> List[float]:
-        return (data - np.min(data)) / (np.max(data) - np.min(data))
-
+        return (data - np.min(data)) / (np.max(data) - np.min(data))\
+            if any(np.diff(data)) else data
+    
     norm_ranks = normalize([row.rank for row in results])
     logger.info("Scaled ranks in range (0,1)")
     scaled_results: List[NamedTuple] = []
-
     for i, row in enumerate(results):
         copy_Row = row._replace(rank=norm_ranks[i])
         scaled_results += [copy_Row]
