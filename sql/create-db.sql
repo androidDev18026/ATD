@@ -1,11 +1,10 @@
 /* 
-    1. Using enviroment variable CSV_PATH to determine the location of the csv file
-    Define it in the psql init script like : # psql -d db_name -f create-db.sql -e -v CSV_PATH=/path/to/csv
+    1. Using enviroment variable CSV_PATH to determine the location of the csv file after running extract.py
 
     2. To add the links to the actual articles append perform another copy from the second enviroment vaiable
-       LOCAL_PATH
-
-    Example: $ psql -U postgres -f create-db.sql -d test_db -a -v CSV_PATH=$PWD/outfile.csv -v LOCAL_PATH=$PWD/article_path.csv
+       LOCAL_PATH using the csv file after running get_local_link.py
+       
+    Example: $ psql -U postgres -f create-db.sql -d test_db -a -v CSV_PATH=/path/to/outfile.csv -v LOCAL_PATH=/path/to/article_path.csv
 */
 
 DROP TABLE IF EXISTS documents CASCADE;
