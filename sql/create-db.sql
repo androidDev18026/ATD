@@ -40,3 +40,5 @@ UPDATE documents SET filepath = (select filepath_ from temp_dest where documents
 /* Raw text files should not be present in the database so we can drop that column
    and only keep the one with texts represente as vectors */ 
 ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE; 
+
+CREATE INDEX docvec_idx ON documents USING GIN (docvec);

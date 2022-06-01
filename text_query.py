@@ -18,7 +18,7 @@ from psycopg.rows import namedtuple_row
 from utils.call_grep import execute_cmd
 
 logging.basicConfig(
-    format="[%(levelname)s] %(asctime)s: %(message)s",
+    format="[%(levelname)-5s] %(asctime)s: %(message)s",
     datefmt="%d/%m/%Y %H:%M:%S",
     level=logging.INFO,
 )
@@ -137,11 +137,7 @@ def execute_similarity_query(
         for row in cur.fetchmany(max_res):
             result_set += [row]
 
-    if result_set:
-        logger.info("Found %d docs out of the %d requested", len(result_set), max_res)
-    else:
-        logger.warning("Got no results!")
-
+        
     return result_set
 
 
@@ -153,7 +149,7 @@ def normalize_rank(results: List[NamedTuple]) -> List[NamedTuple]:
 
     norm_ranks = normalize([row.rank for row in results])
     logger.info("Scaled ranks in range (0,1)")
-    scaled_results = list()
+    scaled_results: List[NamedTuple] = []
 
     for i, row in enumerate(results):
         copy_Row = row._replace(rank=norm_ranks[i])
@@ -292,25 +288,31 @@ if __name__ == "__main__":
 
     metric_ = validate_metric(metric)
 
-    cols_to_display = ("title", "filepath")
+    cols_to_display = ("title", "filepath")#, "docvec")
     logger.info(f"Showing cols {*cols_to_display,}")
 
     query = prep_query(query, *cols_to_display, metric=metric_)
+    
+    try:    
+        results = execute_similarity_query(query, connection, int(max_res))
+        scaled_results = normalize_rank(results)
+        
+        thres: float = 0.5
+        
+        logger.info("Found %d docs out of the %d requested", len(results), int(max_res))
+        logger.info("Using threshold to classify document as recommended: >= %.1f", thres)
+        logger.info(
+            "Recommended Docs: %d/%d",
+            find_relevant(scaled_results, threshold=thres),
+            results.__len__(),
+            )
 
-    results = execute_similarity_query(query, connection, int(max_res))
-    scaled_results = normalize_rank(results)
-
-    thres: float = 0.5
-
-    logger.info("Using threshold to classify document as recommended: >= %.1f", thres)
-    logger.info(
-        "Recommended Docs: %d/%d",
-        find_relevant(scaled_results, threshold=thres),
-        results.__len__(),
-    )
-
-    display_results(scaled_results)
-    display_matching_lines(scaled_results, query_str, thres)
-
-    connection.close()
-    logger.info("Connection to database closed")
+        display_results(scaled_results)
+        display_matching_lines(scaled_results, query_str, thres)
+    
+    except ValueError:
+        logger.error("Got 0 results!")
+            
+    finally:    
+        connection.close()
+        logger.info("Connection to database closed")

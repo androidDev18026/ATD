@@ -15,7 +15,8 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] Add columns to show in `text_query.py`
 - [X] Show lines that have keywords (grep maybe?)
 - [X] Add `requirements.txt`
-- [ ] Fix - In `text_query.py`:301 -> check if list empty <prompt: κουλης>
+- [X] Fix - In `text_query.py`:301 -> check if list empty
 - [X] Move `links.csv` to `csv_files`
-- [ ] Add show vector in `text_query.py` output
-- [ ] Use GIN index on docvec column
+- [X] ~~Add show vector in `text_query.py` output~~
+- [X] Use GIN index on docvec column
+- [ ] Displaying docvec troublesome in terminal
