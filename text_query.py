@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import unicodedata
 import sys
 from collections import defaultdict
 from configparser import ConfigParser
@@ -98,10 +99,10 @@ def initialize_conn(conf_dict: Dict) -> psycopg.Connection:
 
 
 def prep_query(user_input: str, *columns: str, metric: int = 0) -> str:
-
+    
     user_input = re.sub("\W", " ", user_input)
     user_input = re.sub("\s\s+", " ", user_input)
-
+    
     logger.info("User searched for [%s]", user_input)
 
     query = f"SELECT {','.join(columns)}, ts_rank_cd(docvec, query, {metric}) AS rank \
@@ -186,8 +187,8 @@ def display_matching_line(
         if len(word) >= cutoff:
             keywords += [stem_word(word, "NNM").lower() + "*"]
         else:
-            keywords += [word]
-
+            keywords += [word.lower()]
+    
     matching_lines = execute_cmd(filename, *keywords)
     color_word = lambda word: f"{bcolors.OKGREEN}{bcolors.BOLD}{word}{bcolors.ENDC}"
 
