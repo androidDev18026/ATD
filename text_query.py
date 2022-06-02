@@ -298,7 +298,7 @@ if __name__ == "__main__":
         scaled_results = normalize_rank(results)
         
         thres: float = 0.5
-        
+
         logger.info("Found %d docs out of the %d requested", len(results), int(max_res))
         logger.info("Using threshold to classify document as recommended: >= %.1f", thres)
         logger.info(
@@ -310,9 +310,10 @@ if __name__ == "__main__":
         display_results(scaled_results)
         display_matching_lines(scaled_results, query_str, thres)
     
-    except ValueError:
+    except (ValueError, AssertionError):
         logger.error("Got 0 results!")
             
+
     finally:    
         connection.close()
         logger.info("Connection to database closed")
