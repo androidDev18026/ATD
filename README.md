@@ -19,5 +19,5 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] Move `links.csv` to `csv_files`
 - [X] ~~Add show vector in `text_query.py` output~~
 - [X] Use GIN index on docvec column
-- [ ] Displaying docvec troublesome in terminal
+- [X] Displaying docvec troublesome in terminal
 - [ ] Add comments
