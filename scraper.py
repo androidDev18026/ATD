@@ -17,11 +17,13 @@ logger = logging.getLogger()
 logger.setLevel("INFO")
 
 
+# Select links to news articles from in.gr
 def get_in_gr(soup: BeautifulSoup) -> List[str]:
     links = soup.find_all("a", {"class": "tile relative-title"})
     return [i["href"] for i in links]
 
 
+# Select links to news articles from zougla.gr
 def get_zougla(soup: BeautifulSoup) -> List[str]:
     links = soup.find_all("div", {"class": "secondary_story_content"})
     return [
@@ -29,7 +31,7 @@ def get_zougla(soup: BeautifulSoup) -> List[str]:
         for i in links
     ]
 
-
+# Select links to news articles from naftemporiki.gr
 def get_naftemporiki(soup: BeautifulSoup) -> List[str]:
     links = soup.find_all("h4")
     prepend = "https://www.naftemporiki.gr"
@@ -40,11 +42,13 @@ def get_naftemporiki(soup: BeautifulSoup) -> List[str]:
     ]
 
 
+# Select links to news articles from news247.gr
 def get_news247(soup: BeautifulSoup) -> List[str]:
     links = soup.find_all("h3", {"class": "article__title bold"})
     return [i.find("a", href=True)["href"] for i in links]
 
 
+# Perform GET request to every website and gather links
 def get_latest_from_url(url):
     ses.cookies.clear()
     res = ses.get(url, timeout=2, headers={"Content-Type": "text/html; charset=UTF-8"})
@@ -93,6 +97,7 @@ def get_num_lines(filepath: str) -> int:
     return count
 
 
+# Write gathered links to a CSV file
 def links_to_file(outfile: str, links: List[str], override: bool = False):
 
     fmode, start_idx = "w", 0

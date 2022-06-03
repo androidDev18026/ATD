@@ -38,6 +38,7 @@ def get_num_files(dirname: str) -> int:
     return nfiles if nfiles else 0
 
 
+# Check if file is already present as to not overwrite
 def check_sync(dirname: str, outfile: str):
     if os.path.exists(outfile) and os.path.isfile(outfile):
         logger.info("%s present in the current path", outfile)
@@ -104,12 +105,14 @@ def read_df(
         logger.error(o.strerror)
 
 
+# Remove accents and lowercase each token
 def strip_accents_and_lowercase(s: str) -> str:
     return "".join(
         c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
     ).lower()
 
 
+# Write article body after preprocessing to a new file
 def write_article(df: pd.DataFrame, outdir: str, discard_longer: int = 20) -> None:
     if not os.path.isdir(outdir):
         logger.warning("%s not a directory", outdir)

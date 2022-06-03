@@ -25,7 +25,8 @@ class PoliticsCrawler:
 
     def __repr__(self) -> str:
         pass
-
+    
+    # Read links from CSV file
     def read_from_file(self):
 
         nfiles = self.check_empty_dir(self.outdir)
@@ -44,7 +45,8 @@ class PoliticsCrawler:
         )
 
         self.df_links.set_axis(["url"], axis=1, inplace=True)
-
+    
+    # Download HTML webpages and write to file
     async def get_raw_html_and_write(self):
         for link in tqdm(
             self.df_links.url,
@@ -123,7 +125,8 @@ def main():
     cr = PoliticsCrawler(sys.argv[1], sys.argv[2])
 
     cr.read_from_file()
-
+    
+    # Start async session and download all HTML pages
     session.run(cr.get_raw_html_and_write)
 
 

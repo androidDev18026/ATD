@@ -12,6 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
+# Get absolute path of each document/article
 def get_paths(basedir: str) -> List[str]:
     assert os.path.isdir(basedir), f"No such directory {basedir}"
     assert any(os.scandir(basedir)), f"No files in {basedir}"
@@ -34,7 +35,8 @@ if __name__ == "__main__":
     logger.info("Found %d articles in %s", len(paths), os.path.abspath(sys.argv[1]))
 
     logger.info("Reading from %s", sys.argv[1])
-
+    
+    # Save every path to a CSV file along with and ID
     with open(sys.argv[2], mode="w", encoding="utf-8") as out:
         writer = csv.writer(out)
         writer.writerow(("id", "path"))

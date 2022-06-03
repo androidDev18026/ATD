@@ -25,6 +25,7 @@ class DirectoryNotFound(FileNotFoundError):
     __module__ = FileNotFoundError.__module__
 
 
+# Define selectors for HTML components per site
 class Selector:
     IN = [".main-content > div:nth-child(2)", ".floated-content > div:nth-child(1)"]
     ZOUGLA = "div.article-container:nth-child(2) > div:nth-child(1) > div:nth-child(8)"
@@ -43,7 +44,7 @@ class Extractor:
 
     def __repr__(self) -> str:
         return f"Reading from {self.dirname}"
-
+    
     def find_all_files(self):
 
         self.html_raw = sorted(
@@ -58,6 +59,7 @@ class Extractor:
 
         return dict(zip(self.html_raw, urls))
 
+    # Get the right selector to match site
     def get_selector(self, doc):
 
         map_ = self.map_to_links()
@@ -89,6 +91,7 @@ class Extractor:
         else:
             raise ParseError("Cannot parse documents.")
 
+    # Extract the main article body per site
     def extract_main(self, html_doc):
 
         soup = self.get_soup(html_doc)
@@ -144,7 +147,8 @@ class Extractor:
 
     def get_all_titles(self):
         self.titles = [self.get_title(doc) for doc in self.html_raw if self.html_raw]
-
+    
+    # Create CSV file with body and metadata
     def construct_csv(self):
         df_tmp = []
 

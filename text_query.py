@@ -27,6 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 MAX_RESULTS = 100
+# Define all the valid PostgreSQL dist. metrics
 VALID_METRICS = {
     "no_doc_length": 0,
     "div_rank_by_1_log": 1,
@@ -50,6 +51,7 @@ class bcolors:
     UNDERLINE = "\033[4m"
 
 
+# Reads database connection info from a .ini file
 def read_from_config(conf_file: str) -> Dict[str, str] | NoneType:
 
     config = ConfigParser(allow_no_value=False)
@@ -87,6 +89,7 @@ def read_from_config(conf_file: str) -> Dict[str, str] | NoneType:
     logger.error("Insufficient number of connection parameters.")
 
 
+# Establish connection to database
 def initialize_conn(conf_dict: Dict) -> psycopg.Connection:
 
     try:
@@ -98,6 +101,7 @@ def initialize_conn(conf_dict: Dict) -> psycopg.Connection:
         raise e
 
 
+# Prepare query with selected columns to project, metrics and keywords
 def prep_query(user_input: str, *columns: str, metric: int = 0) -> str:
     
     user_input = re.sub("\W", " ", user_input)
@@ -257,11 +261,11 @@ def display_matching_lines(
         logger.info("Skipping the display of matching lines")
 
 
+# Return no. of relevant docs if they rank above threshold
 def find_relevant(results: List[NamedTuple], threshold: float = 0.5) -> int:
     return sum(1 for i in results if i.rank >= threshold)
 
 
-# display all available metrics
 def validate_metric(metric: str, default: str = "no_doc_length") -> int:
     if metric in VALID_METRICS.keys():
         logger.info("Metric chosen [%s]", metric)
@@ -276,7 +280,11 @@ def validate_metric(metric: str, default: str = "no_doc_length") -> int:
 
 
 if __name__ == "__main__":
-
+    
+    '''
+    In case the .ini file is saved under a different name
+    this must be explicitly defined inside the argument below
+    '''
     config = read_from_config("postgre.ini")
 
     connection = initialize_conn(config)
@@ -289,7 +297,13 @@ if __name__ == "__main__":
 
     metric_ = validate_metric(metric)
 
-    cols_to_display = ("title", "filepath")#, "docvec")
+    cols_to_display = ("title", "filepath")
+    '''
+    Uncomment line below to show the vector holding the data aswell.
+    WARNING: This may result in output being improperly formatted
+    '''
+    # cols_to_display = ("title", "filepath", "docvec")
+    
     logger.info(f"Showing cols {*cols_to_display,}")
 
     query = prep_query(query, *cols_to_display, metric=metric_)
@@ -298,8 +312,9 @@ if __name__ == "__main__":
         results = execute_similarity_query(query, connection, int(max_res))
         scaled_results = normalize_rank(results)
         
-        thres: float = 0.5
-
+        # Setting the threshold for relevant docs to 0.5 and above        
+        thres: float = 0.5 # Change to any non-negative value below 1.0
+        
         logger.info("Found %d docs out of the %d requested", len(results), int(max_res))
         logger.info("Using threshold to classify document as recommended: >= %.1f", thres)
         logger.info(
