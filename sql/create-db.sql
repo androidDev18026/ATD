@@ -41,4 +41,5 @@ UPDATE documents SET filepath = (select filepath_ from temp_dest where documents
    and only keep the one with texts represente as vectors */ 
 ALTER TABLE documents DROP COLUMN IF EXISTS body CASCADE; 
 
+/* Add Index on documents vectors column */
 CREATE INDEX docvec_idx ON documents USING GIN (docvec);
