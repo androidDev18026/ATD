@@ -19,7 +19,7 @@ from psycopg.rows import namedtuple_row
 from utils.call_grep import execute_cmd
 
 logging.basicConfig(
-    format="[%(levelname)-5s] %(asctime)s: %(message)s",
+    format="[%(levelname)-7s] %(asctime)s: %(message)s",
     datefmt="%d/%m/%Y %H:%M:%S",
     level=logging.INFO,
 )
