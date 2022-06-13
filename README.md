@@ -20,4 +20,4 @@ Task for the ATD course - DWS MSc Spring 2022
 - [X] ~~Add show vector in `text_query.py` output~~
 - [X] Use GIN index on docvec column
 - [X] Displaying docvec troublesome in terminal
-- [ ] Add comments
+- [X] Add comments
